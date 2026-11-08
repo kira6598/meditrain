@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+.vs/
+artifacts/
+*.db
+*.db-shm
+*.db-wal
+*.user
+*.suo
+TestResults/
+.env
+.env.*
+!.env.example

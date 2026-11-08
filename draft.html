@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phần mềm Quản lý Đào tạo & CME Nhân viên Y tế</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.com/npm/chart.js"></script>
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white; color: black; }
+            .print-container { width: 100%; margin: 0; padding: 0; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-teal-700 to-blue-800 text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2.5 bg-white/10 rounded-xl backdrop-blur-sm">
+                        <i data-lucide="hospital" class="w-8 h-8 text-teal-200"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold tracking-tight">HỆ THỐNG QUẢN LÝ ĐÀO TẠO Y TẾ & CME</h1>
+                        <p class="text-xs text-teal-100">Theo dõi Sinh hoạt Khoa học Kỹ thuật & Chứng chỉ Đào tạo liên tục</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetToSampleData()" class="px-3 py-2 bg-teal-600/80 hover:bg-teal-600 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Nạp dữ liệu mẫu
+                    </button>
+                    <button onclick="window.print()" class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg text-xs font-medium transition flex items-center gap-1.5 backdrop-blur-sm shadow-sm">
+                        <i data-lucide="printer" class="w-3.5 h-3.5"></i> In / Xuất PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-1 overflow-x-auto py-2">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-teal-700 bg-teal-50">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Tổng Quan
+                </button>
+                <button onclick="switchTab('employees')" id="tab-employees" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="users" class="w-4 h-4"></i> Quản lý Nhân viên
+                </button>
+                <button onclick="switchTab('activities')" id="tab-activities" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Quản lý Đào tạo & SHKHKT
+                </button>
+                <button onclick="switchTab('report-2years')" id="tab-report-2years" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="award" class="w-4 h-4"></i> Báo cáo 2 Năm (48 Tiết)
+                </button>
+                <button onclick="switchTab('report-1year')" id="tab-report-1year" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i> Báo cáo 1 Năm (12 Tiết)
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-4 py-2.5 text-sm font-medium rounded-lg transition flex items-center gap-2 whitespace-nowrap text-slate-600 hover:bg-slate-100">
+                    <i data-lucide="pie-chart" class="w-4 h-4"></i> Báo cáo Tỷ lệ & Biểu đồ
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- TAB 1: DASHBOARD -->
+        <div id="content-dashboard" class="tab-content space-y-6">
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng nhân viên</p>
+                        <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-total-emp">0</h3>
+                        <p class="text-xs text-slate-400 mt-1">Bác sĩ, ĐD, KTV, Dược sĩ...</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Split KPI: 2 Years -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Tỷ lệ Đạt 48T (2 Năm)</p>
+                        <h3 class="text-2xl font-bold text-indigo-700 mt-1" id="stat-compliance-2y">0%</h3>
+                        <p class="text-xs text-indigo-600 mt-1 font-medium" id="stat-compliance-2y-count">0 / 0 nhân viên</p>
+                    </div>
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <!-- Split KPI: 1 Year -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-teal-600 uppercase tracking-wider">Tỷ lệ Đạt 12T (1 Năm)</p>
+                        <h3 class="text-2xl font-bold text-teal-700 mt-1" id="stat-compliance-1y">0%</h3>
+                        <p class="text-xs text-teal-600 mt-1 font-medium" id="stat-compliance-1y-count">0 / 0 nhân viên</p>
+                    </div>
+                    <div class="p-3 bg-teal-50 text-teal-600 rounded-xl">
+                        <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Tiết Đào Tạo</p>
+                        <h3 class="text-2xl font-bold text-amber-600 mt-1" id="stat-total-hours">0</h3>
+                        <p class="text-xs text-slate-400 mt-1" id="stat-hours-breakdown">SHKHKT + CME</p>
+                    </div>
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                        <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i>
+                        Tỷ lệ Tuân thủ Mục 1 (48 Tiết / 2 Năm Liên Kề)
+                    </h3>
+                    <div class="h-64 flex justify-center items-center">
+                        <canvas id="complianceChart2Y"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-base font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <i data-lucide="pie-chart" class="w-5 h-5 text-teal-600"></i>
+                        Tỷ lệ Tuân thủ Mục 2 (12 Tiết / 1 Năm Bắt Buộc)
+                    </h3>
+                    <div class="h-64 flex justify-center items-center">
+                        <canvas id="complianceChart1Y"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Info Regulations Banner -->
+            <div class="bg-gradient-to-r from-blue-50 to-teal-50 border border-teal-200 rounded-2xl p-5 flex items-start gap-4">
+                <div class="p-3 bg-teal-600 text-white rounded-xl shadow-sm shrink-0">
+                    <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-teal-900 text-base">Quy định Đào tạo Liên tục Y tế (Luật Khám bệnh, chữa bệnh & Thông tư 22/2013/TT-BYT)</h4>
+                    <ul class="text-sm text-teal-800 mt-2 space-y-1 list-disc list-inside">
+                        <li>Cán bộ y tế đã được cấp chứng chỉ hành nghề có nghĩa vụ tham gia đào tạo liên tục tối thiểu <b>48 tiết học</b> trong <b>02 năm liên tiếp</b>.</li>
+                        <li>Yêu cầu bổ sung: Mỗi năm tối thiểu phải hoàn thành từ <b>12 tiết học</b> trở lên.</li>
+                        <li>Hình thức tính tiết: <b>SHKHKT tại BV</b> (Nội viện) hoặc <b>CME</b> từ các Trường Đại học Y Dược, Bệnh viện tuyến trên (Ngoại viện).</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: EMPLOYEES MANAGEMENT -->
+        <div id="content-employees" class="tab-content hidden space-y-6">
+            <!-- Controls Header -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex flex-1 items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 max-w-xs">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="emp-search" oninput="renderEmployees()" placeholder="Tìm tên, mã NV..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <select id="emp-dept-filter" onchange="renderEmployees()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                        <option value="">Tất cả Khoa / Phòng</option>
+                    </select>
+                </div>
+                <button onclick="openEmployeeModal()" class="w-full md:w-auto px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-sm">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i> Thêm Nhân Viên
+                </button>
+            </div>
+
+            <!-- Employee Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                <th class="p-4">Mã NV</th>
+                                <th class="p-4">Họ và Tên</th>
+                                <th class="p-4">Khoa / Phòng</th>
+                                <th class="p-4">Chức danh / Chức vụ</th>
+                                <th class="p-4">Trình độ</th>
+                                <th class="p-4">Ngày vào làm</th>
+                                <th class="p-4 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employee-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: ACTIVITIES MANAGEMENT -->
+        <div id="content-activities" class="tab-content hidden space-y-6">
+            <!-- Controls Header -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex flex-1 items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-1 max-w-xs">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="act-search" oninput="renderActivities()" placeholder="Tìm tên khóa học, giảng viên..." class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <select id="act-type-filter" onchange="renderActivities()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                        <option value="">Tất cả hình thức</option>
+                        <option value="SHKHKT">SHKHKT Nội viện</option>
+                        <option value="CME">CME Ngoại viện</option>
+                    </select>
+                    <select id="act-year-filter" onchange="renderActivities()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none bg-white">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <button onclick="openActivityModal()" class="w-full md:w-auto px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 shadow-sm">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Thêm Hồ Sơ Đào Tạo
+                </button>
+            </div>
+
+            <!-- Activities Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                <th class="p-4">Nhân viên</th>
+                                <th class="p-4">Tên Khóa học / SHKHKT</th>
+                                <th class="p-4">Phân loại</th>
+                                <th class="p-4">Đơn vị tổ chức</th>
+                                <th class="p-4">Thời gian</th>
+                                <th class="p-4 text-center">Số tiết</th>
+                                <th class="p-4">Mã Chứng chỉ</th>
+                                <th class="p-4 text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: MỤC 2 - BÁO CÁO TUÂN THỦ 1 NĂM (12 TIẾT) -->
+        <div id="content-report-1year" class="tab-content hidden space-y-6">
+            <!-- Header & Filter -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm no-print space-y-4">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="calendar" class="w-5 h-5 text-teal-600"></i>
+                            MỤC 2: BÁO CÁO TUÂN THỦ 1 NĂM (ĐIỀU KIỆN ≥ 12 TIẾT)
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">Đánh giá việc hoàn thành số tiết đào tạo tối thiểu bắt buộc trong từng năm đơn lẻ.</p>
+                    </div>
+
+        <!-- TAB 6: NEW - BÁO CÁO TỶ LỆ & BIỂU ĐỒ (ANALYTICS DASHBOARD) -->
+        <div id="content-analytics" class="tab-content hidden space-y-6">
+            <!-- Header & Filter -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm no-print flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 text-indigo-600"></i>
+                        BÁO CÁO TỔNG HỢP TỶ LỆ TUÂN THỦ & BIỂU ĐỒ SO SÁNH
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">Phân tích trực quan tỷ lệ đạt chuẩn 48 tiết / 2 năm và 12 tiết / 1 năm theo từng Khoa / Phòng.</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <label class="text-xs font-semibold text-slate-600">Chu kỳ 2 năm:</label>
+                        <select id="analytics-2y-range" onchange="renderAnalyticsTab()" class="border border-slate-300 rounded-lg px-2 py-1 text-sm font-bold text-indigo-700 bg-white">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <label class="text-xs font-semibold text-slate-600">Năm 12T:</label>
+                        <select id="analytics-1y-year" onchange="renderAnalyticsTab()" class="border border-slate-300 rounded-lg px-2 py-1 text-sm font-bold text-teal-700 bg-white">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <button onclick="exportAnalyticsExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Xuất Excel Tỷ Lệ
+                    </button>
+                    <button onclick="window.print()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="printer" class="w-4 h-4"></i> In Báo Cáo & Biểu Đồ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Print Header for Analytics -->
+            <div class="hidden print-only text-center border-b pb-4 mb-4">
+                <h2 class="text-xl font-bold uppercase">BỆNH VIỆN / CƠ SỞ Y TẾ</h2>
+                <h3 class="text-lg font-bold mt-1">BÁO CÁO THỐNG KÊ TỶ LỆ TUÂN THỦ ĐÀO TẠO Y TẾ</h3>
+                <p class="text-sm text-slate-600 mt-1">Mục 1 (Chu kỳ 2 năm): <span id="print-analytics-2y-text" class="font-bold">2025-2026</span> | Mục 2 (Năm): <span id="print-analytics-1y-text" class="font-bold">2026</span></p>
+            </div>
+
+            <!-- Side-by-Side Pie Charts -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-sm mb-3 text-center flex items-center justify-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-indigo-600"></i>
+                        MỤC 1: TỶ LỆ TUÂN THỦ CHU KỲ 2 NĂM (≥ 48 TIẾT)
+                    </h4>
+                    <div class="h-64 flex justify-center items-center">
+                        <canvas id="analyticsPie2Y"></canvas>
+                    </div>
+                    <div id="analytics-legend-2y" class="mt-4 text-center text-xs font-semibold text-slate-600"></div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 text-sm mb-3 text-center flex items-center justify-center gap-2">
+                        <i data-lucide="pie-chart" class="w-4 h-4 text-teal-600"></i>
+                        MỤC 2: TỶ LỆ TUÂN THỦ NĂM ĐƠN LẺ (≥ 12 TIẾT)
+                    </h4>
+                    <div class="h-64 flex justify-center items-center">
+                        <canvas id="analyticsPie1Y"></canvas>
+                    </div>
+                    <div id="analytics-legend-1y" class="mt-4 text-center text-xs font-semibold text-slate-600"></div>
+                </div>
+            </div>
+
+            <!-- Full-width Bar Chart: Department Comparison -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h4 class="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-5 h-5 text-indigo-600"></i>
+                    SO SÁNH TỶ LỆ ĐẠT CHUẨN (%) THEO KHOA / PHÒNG
+                </h4>
+                <div class="h-72">
+                    <canvas id="deptComparisonBarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Department Rates Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-200 bg-slate-50/70">
+                    <h4 class="font-bold text-slate-800 text-sm">BẢNG TỔNG HỢP TỶ LỆ TUÂN THỦ THEO KHOA / PHÒNG</h4>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                                <th class="p-3">STT</th>
+                                <th class="p-3">Khoa / Phòng</th>
+                                <th class="p-3 text-center">Tổng Nhân Viên</th>
+                                <th class="p-3 text-center bg-indigo-50/50">Đạt Mục 1 (48T)</th>
+                                <th class="p-3 text-center bg-indigo-50/50">Tỷ Lệ Mục 1 (%)</th>
+                                <th class="p-3 text-center bg-teal-50/50">Đạt Mục 2 (12T)</th>
+                                <th class="p-3 text-center bg-teal-50/50">Tỷ Lệ Mục 2 (%)</th>
+                                <th class="p-3 text-center">Đánh Giá Chung</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analytics-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Employee (Add/Edit) -->
+    <div id="modal-employee" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-slate-100">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base" id="modal-employee-title">Thêm Nhân Viên Mới</h3>
+                <button onclick="closeEmployeeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-employee" onsubmit="saveEmployee(event)" class="p-6 space-y-4">
+                <input type="hidden" id="emp-id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Mã Nhân viên *</label>
+                        <input type="text" id="emp-code" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Họ và Tên *</label>
+                        <input type="text" id="emp-name" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Khoa / Phòng *</label>
+                        <input type="text" id="emp-dept" required list="dept-list" placeholder="VD: Khoa Nội, Khoa Cấp Cứu..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                        <datalist id="dept-list"></datalist>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Chức danh / Chức vụ</label>
+                        <input type="text" id="emp-title" placeholder="VD: Bác sĩ điều trị, Điều dưỡng trưởng..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Trình độ chuyên môn</label>
+                        <select id="emp-degree" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <option value="BSCKII / Tiến sĩ">BSCKII / Tiến sĩ</option>
+                            <option value="BSCKI / Thạc sĩ">BSCKI / Thạc sĩ</option>
+                            <option value="Bác sĩ Đa khoa">Bác sĩ Đa khoa</option>
+                            <option value="Cử nhân Điều dưỡng">Cử nhân Điều dưỡng</option>
+                            <option value="Cao đẳng / Trung cấp">Cao đẳng / Trung cấp</option>
+                            <option value="Dược sĩ">Dược sĩ</option>
+                            <option value="Khác">Khác</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày vào làm</label>
+                        <input type="date" id="emp-start-date" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium shadow-sm">Lưu thông tin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Activity (Add/Edit) -->
+    <div id="modal-activity" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base" id="modal-activity-title">Thêm Hồ Sơ Đào Tạo / SHKHKT</h3>
+                <button onclick="closeActivityModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-activity" onsubmit="saveActivity(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                <input type="hidden" id="act-id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Chọn Nhân viên *</label>
+                    <select id="act-emp-id" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tên Bài Sinh hoạt / Khóa Đào tạo CME *</label>
+                    <input type="text" id="act-title" required placeholder="VD: Cập nhật điều trị Tăng huyết áp 2024..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Phân loại Đào tạo *</label>
+                        <select id="act-type" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                            <option value="SHKHKT">SHKHKT Nội viện (Sinh hoạt KHKT Bệnh viện)</option>
+                            <option value="CME">CME Ngoại viện (Đào tạo liên tục ngoài BV)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Số Tiết / Tín chỉ học *</label>
+                        <input type="number" step="0.5" min="0.5" id="act-hours" required placeholder="VD: 4, 8, 12..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Đơn vị Tổ chức / Cấp chứng chỉ *</label>
+                    <input type="text" id="act-provider" required placeholder="VD: Bệnh viện Chợ Rẫy, ĐH Y Dược TPHCM, BV Nội viện..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày Bắt đầu *</label>
+                        <input type="date" id="act-start-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Ngày Hoàn thành *</label>
+                        <input type="date" id="act-end-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Số Mã chứng chỉ / Số Quyết định</label>
+                        <input type="text" id="act-cert-no" placeholder="VD: 1234/QĐ-BV, CME-2024-88..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label>
+                        <input type="text" id="act-notes" placeholder="VD: Giảng viên, Đã nộp bản sao..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3 border-t border-slate-100">
+                    <button type="button" onclick="closeActivityModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium shadow-sm">Lưu hồ sơ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Employee Detail Log -->
+    <div id="modal-employee-detail" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
+            <div class="px-6 py-4 bg-teal-700 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-lg" id="detail-emp-name">Nguyễn Văn A</h3>
+                    <p class="text-xs text-teal-100" id="detail-emp-sub">Mã: NV001 | Khoa Nội | Bác sĩ Đa khoa</p>
+                </div>
+                <button onclick="closeDetailModal()" class="text-white/80 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                <!-- Year Summary Grid -->
+                <div class="grid grid-cols-3 gap-4" id="detail-stats-grid">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Activity Log List -->
+                <div>
+                    <h4 class="font-bold text-slate-800 text-sm mb-3 flex items-center gap-2">
+                        <i data-lucide="history" class="w-4 h-4 text-teal-600"></i> Lịch Sử Các Khóa Đào Tạo & SHKHKT
+                    </h4>
+                    <div class="border rounded-xl overflow-hidden border-slate-200">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-50 border-b font-semibold text-slate-600">
+                                <tr>
+                                    <th class="p-2.5">Thời gian</th>
+                                    <th class="p-2.5">Tên bài học / Khóa học</th>
+                                    <th class="p-2.5">Loại</th>
+                                    <th class="p-2.5">Đơn vị cấp</th>
+                                    <th class="p-2.5 text-center">Số tiết</th>
+                                    <th class="p-2.5">Số Chứng chỉ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detail-activity-body" class="divide-y divide-slate-100">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center">
+                <span class="text-xs text-slate-500">Mã quy chuẩn 48 tiết / 2 năm liên tiếp</span>
+                <button onclick="closeDetailModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-sm font-medium">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Implementation -->
+    <script>
+        // Data Structures & Storage Keys
+        const STORAGE_EMP = 'med_train_employees_v2';
+        const STORAGE_ACT = 'med_train_activities_v2';
+
+        let employees = [];
+        let activities = [];
+
+        // Sample Seed Data (Enriched for realistic testing)
+        const sampleEmployees = [
+            { id: 'emp-1', code: 'NV001', name: 'BSCKII. Nguyễn Văn An', dept: 'Khoa Nội Tổng hợp', title: 'Trưởng khoa', degree: 'BSCKII / Tiến sĩ', startDate: '2015-03-01' },
+            { id: 'emp-2', code: 'NV002', name: 'ThS.BS. Trần Thị Bình', dept: 'Khoa Cấp cứu', title: 'Bác sĩ điều trị', degree: 'BSCKI / Thạc sĩ', startDate: '2018-06-15' },
+            { id: 'emp-3', code: 'NV003', name: 'ĐD. Lê Hoài Nam', dept: 'Khoa Ngoại Tổng hợp', title: 'Điều dưỡng viên', degree: 'Cử nhân Điều dưỡng', startDate: '2020-01-10' },
+            { id: 'emp-4', code: 'NV004', name: 'BS. Phạm Minh Tuấn', dept: 'Khoa Nhi', title: 'Bác sĩ điều trị', degree: 'Bác sĩ Đa khoa', startDate: '2021-09-01' },
+            { id: 'emp-5', code: 'NV005', name: 'DS. Hoàng Thị Mai', dept: 'Khoa Dược', title: 'Dược sĩ bệnh viện', degree: 'Dược sĩ', startDate: '2019-11-20' },
+            { id: 'emp-6', code: 'NV006', name: 'BSCKI. Vũ Hoàng Long', dept: 'Khoa Khám Bệnh', title: 'Bác sĩ điều trị', degree: 'BSCKI / Thạc sĩ', startDate: '2017-04-12' },
+            { id: 'emp-7', code: 'NV007', name: 'KTV. Đỗ Thanh Hương', dept: 'Khoa Xét nghiệm', title: 'Kỹ thuật viên trưởng', degree: 'Cao đẳng / Trung cấp', startDate: '2022-02-01' }
+        ];
+
+        const sampleActivities = [
+            // 2025 Activities
+            { id: 'act-1', empId: 'emp-1', title: 'Cập nhật Hướng dẫn ĐT Tăng huyết áp 2025', type: 'SHKHKT', provider: 'Bệnh viện Đa khoa', startDate: '2025-02-15', endDate: '2025-02-15', hours: 6, certNo: 'SH01/2025', notes: 'Báo cáo viên' },
+            { id: 'act-2', empId: 'emp-1', title: 'Hội nghị Tim mạch Toàn quốc 2025', type: 'CME', provider: 'Hội Tim mạch học Việt Nam', startDate: '2025-05-10', endDate: '2025-05-12', hours: 24, certNo: 'CME-TM-8821', notes: '' },
+            { id: 'act-3', empId: 'emp-2', title: 'Cấp cứu Ngừng tuần hoàn nâng cao (ACLS)', type: 'CME', provider: 'BV Chợ Rẫy', startDate: '2025-03-10', endDate: '2025-03-12', hours: 16, certNo: 'CME-CR-0021', notes: '' },
+            { id: 'act-4', empId: 'emp-3', title: 'Kiểm soát Nhiễm khuẩn trong Chăm sóc Vết thương', type: 'SHKHKT', provider: 'Bệnh viện Đa khoa', startDate: '2025-04-12', endDate: '2025-04-12', hours: 4, certNo: 'SH05/2025', notes: '' },
+            { id: 'act-5', empId: 'emp-4', title: 'Cấp cứu Nhi khoa Nâng cao', type: 'CME', provider: 'Bệnh viện Nhi Đồng 1', startDate: '2025-06-10', endDate: '2025-06-14', hours: 26, certNo: 'ND1-CME-88', notes: '' },
+            { id: 'act-6', empId: 'emp-5', title: 'Tập huấn Thực hành Dược lâm sàng', type: 'SHKHKT', provider: 'Bệnh viện Đa khoa', startDate: '2025-08-10', endDate: '2025-08-10', hours: 8, certNo: 'SH10/2025', notes: '' },
+            { id: 'act-7', empId: 'emp-6', title: 'Cập nhật Chẩn đoán Hình ảnh & Lâm sàng', type: 'CME', provider: 'Đại học Y Dược TPHCM', startDate: '2025-09-15', endDate: '2025-09-17', hours: 20, certNo: 'YDUC-2025', notes: '' },
+
+            // 2026 Activities
+            { id: 'act-8', empId: 'emp-1', title: 'Sinh hoạt KHKT: Quản lý bệnh mạn tính 2026', type: 'SHKHKT', provider: 'Bệnh viện Đa khoa', startDate: '2026-01-18', endDate: '2026-01-18', hours: 6, certNo: 'SH02/2026', notes: '' },
+            { id: 'act-9', empId: 'emp-1', title: 'Đào tạo Quản lý Chất lượng Bệnh viện', type: 'CME', provider: 'Đại học Y Dược TPHCM', startDate: '2026-04-01', endDate: '2026-04-05', hours: 20, certNo: 'CME-QLCL-992', notes: '' },
+            { id: 'act-10', empId: 'emp-2', title: 'Xử trí Đột quỵ cấp giờ vàng', type: 'SHKHKT', provider: 'Bệnh viện Đa khoa', startDate: '2026-02-12', endDate: '2026-02-12', hours: 8, certNo: 'SH04/2026', notes: '' },
+            { id: 'act-11', empId: 'emp-2', title: 'Hội thảo Cấp cứu chống độc', type: 'CME', provider: 'BV Bạch Mai', startDate: '2026-05-10', endDate: '2026-05-12', hours: 16, certNo: 'BM-2026-99', notes: '' },
+            { id: 'act-12', empId: 'emp-3', title: 'Tập huấn Điều dưỡng lâm sàng Quý 1', type: 'SHKHKT', provider: 'Bệnh viện Đa khoa', startDate: '2026-02-20', endDate: '2026-02-20', hours: 4, certNo: 'SH06/2026', notes: '' },
+            { id: 'act-13', empId: 'emp-4', title: 'Dinh dưỡng Nhi khoa', type: 'CME', provider: 'Trường ĐH Y Hà Nội', startDate: '2026-03-20', endDate: '2026-03-22', hours: 14, certNo: 'CME-YHN-334', notes: '' },
+            { id: 'act-14', empId: 'emp-7', title: 'An toàn Sinh học Phòng Xét nghiệm', type: 'CME', provider: 'Viện Pasteur', startDate: '2026-02-01', endDate: '2026-02-02', hours: 10, certNo: 'PAS-0012', notes: '' }
+        ];
+
+        // Chart instances
+        let complianceChart2YObj = null;
+        let complianceChart1YObj = null;
+        let analyticsPie2YObj = null;
+        let analyticsPie1YObj = null;
+        let deptComparisonBarChartObj = null;
+
+        // Init Application
+        window.onload = function() {
+            loadData();
+            populateYearDropdowns();
+            renderAll();
+            lucide.createIcons();
+        };
+
+        function loadData() {
+            const savedEmp = localStorage.getItem(STORAGE_EMP);
+            const savedAct = localStorage.getItem(STORAGE_ACT);
+
+            if (savedEmp && savedAct) {
+                employees = JSON.parse(savedEmp);
+                activities = JSON.parse(savedAct);
+            } else {
+                employees = [...sampleEmployees];
+                activities = [...sampleActivities];
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_EMP, JSON.stringify(employees));
+            localStorage.setItem(STORAGE_ACT, JSON.stringify(activities));
+        }
+
+        function resetToSampleData() {
+            if (confirm('Bạn có chắc chắn muốn nạp lại dữ liệu mẫu? Toàn bộ thay đổi hiện tại sẽ bị ghi đè.')) {
+                employees = [...sampleEmployees];
+                activities = [...sampleActivities];
+                saveData();
+                renderAll();
+            }
+        }
+
+        function populateYearDropdowns() {
+            const currentYear = new Date().getFullYear();
+            const actYearSelect = document.getElementById('act-year-filter');
+            const r2StartSelect = document.getElementById('r2-start-year');
+            const r1YearSelect = document.getElementById('r1-year-select');
+            const analytics2YSelect = document.getElementById('analytics-2y-range');
+            const analytics1YSelect = document.getElementById('analytics-1y-year');
+
+            let years = new Set([2024, 2025, 2026, currentYear]);
+            activities.forEach(a => {
+                if (a.startDate) years.add(new Date(a.startDate).getFullYear());
+            });
+
+            const sortedYears = Array.from(years).sort((a,b) => b - a);
+
+            // Populate Activity Filter
+            actYearSelect.innerHTML = '<option value="">Tất cả các năm</option>';
+            sortedYears.forEach(y => {
+                actYearSelect.innerHTML += `<option value="${y}">Năm ${y}</option>`;
+            });
+
+            // Populate 2-Year Report Start Year
+            r2StartSelect.innerHTML = '';
+            analytics2YSelect.innerHTML = '';
+            sortedYears.forEach(y => {
+                r2StartSelect.innerHTML += `<option value="${y}">${y}</option>`;
+                analytics2YSelect.innerHTML += `<option value="${y}">Chu kỳ ${y}-${y+1}</option>`;
+            });
+            if (sortedYears.includes(2025)) {
+                r2StartSelect.value = 2025;
+                analytics2YSelect.value = 2025;
+            } else {
+                r2StartSelect.value = sortedYears[0];
+                analytics2YSelect.value = sortedYears[0];
+            }
+
+            // Populate 1-Year Report Year Select
+            r1YearSelect.innerHTML = '';
+            analytics1YSelect.innerHTML = '';
+            sortedYears.forEach(y => {
+                r1YearSelect.innerHTML += `<option value="${y}">Năm ${y}</option>`;
+                analytics1YSelect.innerHTML += `<option value="${y}">Năm ${y}</option>`;
+            });
+            const default1Y = sortedYears.includes(2026) ? 2026 : sortedYears[0];
+            r1YearSelect.value = default1Y;
+            analytics1YSelect.value = default1Y;
+
+            updateEndYearDisplay();
+        }
+
+        function updateEndYearDisplay() {
+            const startY = parseInt(document.getElementById('r2-start-year').value);
+            const endY = startY + 1;
+            document.getElementById('r2-end-year-display').textContent = endY;
+            document.getElementById('r2-print-range').textContent = `${startY} - ${endY}`;
+        }
+
+        function renderAll() {
+            populateDepartmentOptions();
+            renderEmployees();
+            renderActivities();
+            render2YearReport();
+            render1YearReport();
+            updateDashboardStats();
+            lucide.createIcons();
+        }
+
+        function populateDepartmentOptions() {
+            const depts = Array.from(new Set(employees.map(e => e.dept))).filter(Boolean);
+            
+            const empDeptFilter = document.getElementById('emp-dept-filter');
+            const r2DeptFilter = document.getElementById('r2-dept-filter');
+            const r1DeptFilter = document.getElementById('r1-dept-filter');
+            const datalist = document.getElementById('dept-list');
+
+            const curEmp = empDeptFilter.value;
+            const curR2 = r2DeptFilter.value;
+            const curR1 = r1DeptFilter.value;
+
+            empDeptFilter.innerHTML = '<option value="">Tất cả Khoa / Phòng</option>';
+            r2DeptFilter.innerHTML = '<option value="">Tất cả Khoa / Phòng</option>';
+            r1DeptFilter.innerHTML = '<option value="">Tất cả Khoa / Phòng</option>';
+            datalist.innerHTML = '';
+
+            depts.forEach(d => {
+                empDeptFilter.innerHTML += `<option value="${d}">${d}</option>`;
+                r2DeptFilter.innerHTML += `<option value="${d}">${d}</option>`;
+                r1DeptFilter.innerHTML += `<option value="${d}">${d}</option>`;
+                datalist.innerHTML += `<option value="${d}">`;
+            });
+
+            empDeptFilter.value = curEmp;
+            r2DeptFilter.value = curR2;
+            r1DeptFilter.value = curR1;
+        }
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-teal-700', 'bg-teal-50');
+                btn.classList.add('text-slate-600');
+            });
+
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('text-teal-700', 'bg-teal-50');
+                activeBtn.classList.remove('text-slate-600');
+            }
+
+            if (tabId === 'dashboard') {
+                updateDashboardStats();
+            } else if (tabId === 'report-2years') {
+                render2YearReport();
+            } else if (tabId === 'report-1year') {
+                render1YearReport();
+            } else if (tabId === 'analytics') {
+                renderAnalyticsTab();
+            }
+            lucide.createIcons();
+        }
+
+        // --- EMPLOYEES CRUD ---
+        function renderEmployees() {
+            const search = document.getElementById('emp-search').value.toLowerCase();
+            const dept = document.getElementById('emp-dept-filter').value;
+            const tbody = document.getElementById('employee-table-body');
+
+            const filtered = employees.filter(e => {
+                const matchSearch = e.name.toLowerCase().includes(search) || e.code.toLowerCase().includes(search);
+                const matchDept = !dept || e.dept === dept;
+                return matchSearch && matchDept;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">Không tìm thấy nhân viên nào</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(e => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-4 font-semibold text-slate-700">${e.code}</td>
+                    <td class="p-4 font-bold text-slate-900">${e.name}</td>
+                    <td class="p-4 text-slate-600"><span class="px-2.5 py-1 bg-slate-100 rounded-lg text-xs font-medium">${e.dept}</span></td>
+                    <td class="p-4 text-slate-600">${e.title || '-'}</td>
+                    <td class="p-4 text-slate-600">${e.degree || '-'}</td>
+                    <td class="p-4 text-slate-500">${e.startDate ? formatDate(e.startDate) : '-'}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="viewEmployeeDetail('${e.id}')" title="Xem nhật ký đào tạo" class="p-1.5 text-teal-600 hover:bg-teal-50 rounded-lg"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                            <button onclick="openEmployeeModal('${e.id}')" title="Sửa" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteEmployee('${e.id}')" title="Xóa" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            populateActivityEmpDropdown();
+            lucide.createIcons();
+        }
+
+        function openEmployeeModal(empId = null) {
+            const modal = document.getElementById('modal-employee');
+            const title = document.getElementById('modal-employee-title');
+            document.getElementById('form-employee').reset();
+            document.getElementById('emp-id').value = '';
+
+            if (empId) {
+                const e = employees.find(x => x.id === empId);
+                if (e) {
+                    title.textContent = 'Chỉnh Sửa Thông Tin Nhân Viên';
+                    document.getElementById('emp-id').value = e.id;
+                    document.getElementById('emp-code').value = e.code;
+                    document.getElementById('emp-name').value = e.name;
+                    document.getElementById('emp-dept').value = e.dept;
+                    document.getElementById('emp-title').value = e.title || '';
+                    document.getElementById('emp-degree').value = e.degree || 'Bác sĩ Đa khoa';
+                    document.getElementById('emp-start-date').value = e.startDate || '';
+                }
+            } else {
+                title.textContent = 'Thêm Nhân Viên Mới';
+                document.getElementById('emp-code').value = 'NV' + String(employees.length + 1).padStart(3, '0');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById('modal-employee').classList.add('hidden');
+        }
+
+        function saveEmployee(event) {
+            event.preventDefault();
+            const id = document.getElementById('emp-id').value;
+            const code = document.getElementById('emp-code').value.trim();
+            const name = document.getElementById('emp-name').value.trim();
+            const dept = document.getElementById('emp-dept').value.trim();
+            const title = document.getElementById('emp-title').value.trim();
+            const degree = document.getElementById('emp-degree').value;
+            const startDate = document.getElementById('emp-start-date').value;
+
+            if (id) {
+                const index = employees.findIndex(e => e.id === id);
+                if (index !== -1) {
+                    employees[index] = { id, code, name, dept, title, degree, startDate };
+                }
+            } else {
+                const newEmp = {
+                    id: 'emp-' + Date.now(),
+                    code, name, dept, title, degree, startDate
+                };
+                employees.push(newEmp);
+            }
+
+            saveData();
+            closeEmployeeModal();
+            renderAll();
+        }
+
+        function deleteEmployee(empId) {
+            if (confirm('Bạn có chắc chắn muốn xóa nhân viên này? Toàn bộ lịch sử đào tạo liên quan cũng sẽ bị xóa.')) {
+                employees = employees.filter(e => e.id !== empId);
+                activities = activities.filter(a => a.empId !== empId);
+                saveData();
+                renderAll();
+            }
+        }
+
+        function populateActivityEmpDropdown() {
+            const select = document.getElementById('act-emp-id');
+            select.innerHTML = '<option value="">-- Chọn nhân viên --</option>';
+            employees.forEach(e => {
+                select.innerHTML += `<option value="${e.id}">${e.code} - ${e.name} (${e.dept})</option>`;
+            });
+        }
+
+        // --- ACTIVITIES CRUD ---
+        function renderActivities() {
+            const search = document.getElementById('act-search').value.toLowerCase();
+            const type = document.getElementById('act-type-filter').value;
+            const year = document.getElementById('act-year-filter').value;
+            const tbody = document.getElementById('activity-table-body');
+
+            const filtered = activities.filter(a => {
+                const emp = employees.find(e => e.id === a.empId);
+                const empName = emp ? emp.name.toLowerCase() : '';
+                const empCode = emp ? emp.code.toLowerCase() : '';
+                
+                const matchSearch = a.title.toLowerCase().includes(search) || empName.includes(search) || empCode.includes(search) || a.provider.toLowerCase().includes(search);
+                const matchType = !type || a.type === type;
+                const matchYear = !year || (a.startDate && new Date(a.startDate).getFullYear().toString() === year);
+
+                return matchSearch && matchType && matchYear;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">Không tìm thấy khóa đào tạo nào</td></tr>`;
+                return;
+            }
+
+            filtered.sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+
+            tbody.innerHTML = filtered.map(a => {
+                const emp = employees.find(e => e.id === a.empId) || { name: 'Đã xóa', code: 'N/A' };
+                const badgeType = a.type === 'SHKHKT' 
+                    ? `<span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold">SHKHKT Nội viện</span>`
+                    : `<span class="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold">CME Ngoại viện</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4 font-semibold text-slate-800">
+                            <div>${emp.name}</div>
+                            <div class="text-xs text-slate-400 font-normal">${emp.code}</div>
+                        </td>
+                        <td class="p-4 font-medium text-slate-900 max-w-xs">${a.title}</td>
+                        <td class="p-4">${badgeType}</td>
+                        <td class="p-4 text-slate-600 text-xs">${a.provider}</td>
+                        <td class="p-4 text-slate-600 text-xs whitespace-nowrap">${formatDate(a.startDate)} ${a.endDate && a.endDate !== a.startDate ? '<br>đến ' + formatDate(a.endDate) : ''}</td>
+                        <td class="p-4 text-center font-bold text-teal-700">${a.hours} tiết</td>
+                        <td class="p-4 text-slate-500 text-xs">${a.certNo || '-'}</td>
+                        <td class="p-4 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="openActivityModal('${a.id}')" title="Sửa" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                <button onclick="deleteActivity('${a.id}')" title="Xóa" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function openActivityModal(actId = null) {
+            const modal = document.getElementById('modal-activity');
+            const title = document.getElementById('modal-activity-title');
+            document.getElementById('form-activity').reset();
+            document.getElementById('act-id').value = '';
+
+            populateActivityEmpDropdown();
+
+            if (actId) {
+                const a = activities.find(x => x.id === actId);
+                if (a) {
+                    title.textContent = 'Chỉnh Sửa Hồ Sơ Đào Tạo';
+                    document.getElementById('act-id').value = a.id;
+                    document.getElementById('act-emp-id').value = a.empId;
+                    document.getElementById('act-title').value = a.title;
+                    document.getElementById('act-type').value = a.type;
+                    document.getElementById('act-hours').value = a.hours;
+                    document.getElementById('act-provider').value = a.provider;
+                    document.getElementById('act-start-date').value = a.startDate;
+                    document.getElementById('act-end-date').value = a.endDate || a.startDate;
+                    document.getElementById('act-cert-no').value = a.certNo || '';
+                    document.getElementById('act-notes').value = a.notes || '';
+                }
+            } else {
+                title.textContent = 'Thêm Hồ Sơ Đào Tạo / SHKHKT';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeActivityModal() {
+            document.getElementById('modal-activity').classList.add('hidden');
+        }
+
+        function saveActivity(event) {
+            event.preventDefault();
+            const id = document.getElementById('act-id').value;
+            const empId = document.getElementById('act-emp-id').value;
+            const title = document.getElementById('act-title').value.trim();
+            const type = document.getElementById('act-type').value;
+            const hours = parseFloat(document.getElementById('act-hours').value);
+            const provider = document.getElementById('act-provider').value.trim();
+            const startDate = document.getElementById('act-start-date').value;
+            const endDate = document.getElementById('act-end-date').value || startDate;
+            const certNo = document.getElementById('act-cert-no').value.trim();
+            const notes = document.getElementById('act-notes').value.trim();
+
+            if (id) {
+                const index = activities.findIndex(a => a.id === id);
+                if (index !== -1) {
+                    activities[index] = { id, empId, title, type, hours, provider, startDate, endDate, certNo, notes };
+                }
+            } else {
+                const newAct = {
+                    id: 'act-' + Date.now(),
+                    empId, title, type, hours, provider, startDate, endDate, certNo, notes
+                };
+                activities.push(newAct);
+            }
+
+            saveData();
+            closeActivityModal();
+            populateYearDropdowns();
+            renderAll();
+        }
+
+        function deleteActivity(actId) {
+            if (confirm('Bạn có chắc muốn xóa bản ghi đào tạo này?')) {
+                activities = activities.filter(a => a.id !== actId);
+                saveData();
+                renderAll();
+            }
+        }
+
+        // --- MỤC 1: BÁO CÁO TUÂN THỦ 2 NĂM LIÊN KỀ (48 TIẾT) ---
+        function render2YearReport() {
+            updateEndYearDisplay();
+            const startYear = parseInt(document.getElementById('r2-start-year').value);
+            const endYear = startYear + 1;
+
+            document.getElementById('r2-th-y1').textContent = `Năm 1 (${startYear})`;
+            document.getElementById('r2-th-y2').textContent = `Năm 2 (${endYear})`;
+
+            const deptFilter = document.getElementById('r2-dept-filter').value;
+            const statusFilter = document.getElementById('r2-status-filter').value;
+            const tbody = document.getElementById('r2-table-body');
+
+            const filteredEmps = employees.filter(e => !deptFilter || e.dept === deptFilter);
+
+            let passCount = 0;
+            let failCount = 0;
+
+            let reportData = filteredEmps.map(emp => {
+                const y1Hours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === startYear).reduce((sum, a) => sum + (a.hours || 0), 0);
+                const y2Hours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === endYear).reduce((sum, a) => sum + (a.hours || 0), 0);
+                const total2Years = y1Hours + y2Hours;
+
+                const pass48 = total2Years >= 48;
+                const missingHours = pass48 ? 0 : (48 - total2Years);
+
+                if (pass48) passCount++;
+                else failCount++;
+
+                return {
+                    emp, y1Hours, y2Hours, total2Years, pass48, missingHours
+                };
+            });
+
+            // Update KPI Banner
+            const totalCount = filteredEmps.length;
+            document.getElementById('r2-kpi-total').textContent = totalCount;
+            const passPct = totalCount > 0 ? Math.round((passCount / totalCount) * 100) : 0;
+            const failPct = totalCount > 0 ? Math.round((failCount / totalCount) * 100) : 0;
+
+            document.getElementById('r2-kpi-pass').textContent = `${passCount} NV (${passPct}%)`;
+            document.getElementById('r2-kpi-fail').textContent = `${failCount} NV (${failPct}%)`;
+
+            // Filter Status
+            if (statusFilter === 'PASS') {
+                reportData = reportData.filter(r => r.pass48);
+            } else if (statusFilter === 'FAIL') {
+                reportData = reportData.filter(r => !r.pass48);
+            }
+
+            if (reportData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-slate-400">Không có dữ liệu phù hợp với điều kiện lọc</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = reportData.map((r, idx) => {
+                const badge = r.pass48
+                    ? `<span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold inline-flex items-center gap-1 shadow-sm"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> ĐÃ ĐẠT</span>`
+                    : `<span class="px-3 py-1 bg-rose-600 text-white rounded-full text-xs font-bold inline-flex items-center gap-1 shadow-md animate-pulse"><i data-lucide="alert-octagon" class="w-3.5 h-3.5"></i> CẢNH BÁO: CHƯA ĐẠT</span>`;
+
+                const missingDisplay = r.pass48
+                    ? `<span class="text-slate-400 font-medium text-xs">-</span>`
+                    : `<span class="text-rose-600 font-bold text-xs bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">Thiếu ${r.missingHours} tiết</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100 ${!r.pass48 ? 'bg-rose-50/20' : ''}">
+                        <td class="p-3 text-slate-500 font-medium">${idx + 1}</td>
+                        <td class="p-3 font-semibold text-slate-700">${r.emp.code}</td>
+                        <td class="p-3 font-bold text-slate-900">${r.emp.name}</td>
+                        <td class="p-3 text-slate-600 text-xs">${r.emp.dept}</td>
+                        <td class="p-3 text-center font-semibold text-slate-700 bg-indigo-50/20">${r.y1Hours} tiết</td>
+                        <td class="p-3 text-center font-semibold text-slate-700 bg-indigo-50/20">${r.y2Hours} tiết</td>
+                        <td class="p-3 text-center bg-teal-50/30 font-bold text-base ${r.pass48 ? 'text-teal-700' : 'text-rose-600'}">${r.total2Years} / 48t</td>
+                        <td class="p-3 text-center">${badge}</td>
+                        <td class="p-3 text-center">${missingDisplay}</td>
+                        <td class="p-3 text-center no-print">
+                            <button onclick="viewEmployeeDetail('${r.emp.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-50 text-teal-700 rounded-lg text-xs font-semibold transition">Chi tiết</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function export2YearExcel() {
+            const startYear = parseInt(document.getElementById('r2-start-year').value);
+            const endYear = startYear + 1;
+
+            const dataToExport = employees.map((emp, idx) => {
+                const y1Hours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === startYear).reduce((sum, a) => sum + (a.hours || 0), 0);
+                const y2Hours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === endYear).reduce((sum, a) => sum + (a.hours || 0), 0);
+                const total = y1Hours + y2Hours;
+                const pass = total >= 48;
+
+                return {
+                    "STT": idx + 1,
+                    "Mã NV": emp.code,
+                    "Họ và Tên": emp.name,
+                    "Khoa / Phòng": emp.dept,
+                    "Chức danh": emp.title || '',
+                    [`Số tiết ${startYear}`]: y1Hours,
+                    [`Số tiết ${endYear}`]: y2Hours,
+                    "Tổng 2 Năm (Tiết)": total,
+                    "TRẠNG THÁI (48 TIẾT)": pass ? "ĐÃ ĐẠT" : "CẢNH BÁO: CHƯA ĐẠT",
+                    "SỐ TIẾT THIẾU": pass ? 0 : (48 - total)
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Bao_Cao_2_Nam_${startYear}_${endYear}`);
+            XLSX.writeFile(workbook, `Bao_Cao_Tuan_Thu_2_Nam_${startYear}_${endYear}.xlsx`);
+        }
+
+        // --- MỤC 2: BÁO CÁO TUÂN THỦ 1 NĂM (12 TIẾT) ---
+        function render1YearReport() {
+            const selectedYear = parseInt(document.getElementById('r1-year-select').value);
+            document.getElementById('r1-print-year').textContent = selectedYear;
+            document.getElementById('r1-kpi-pass-title').textContent = `ĐÃ ĐẠT NĂM ${selectedYear} (≥ 12 TIẾT)`;
+            document.getElementById('r1-kpi-fail-title').textContent = `CẢNH BÁO: CHƯA ĐẠT 12 TIẾT NĂM ${selectedYear}`;
+
+            const deptFilter = document.getElementById('r1-dept-filter').value;
+            const statusFilter = document.getElementById('r1-status-filter').value;
+            const tbody = document.getElementById('r1-table-body');
+
+            const filteredEmps = employees.filter(e => !deptFilter || e.dept === deptFilter);
+
+            let passCount = 0;
+            let failCount = 0;
+
+            let reportData = filteredEmps.map(emp => {
+                const yearActs = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === selectedYear);
+                
+                const shkhktHours = yearActs.filter(a => a.type === 'SHKHKT').reduce((sum, a) => sum + (a.hours || 0), 0);
+                const cmeHours = yearActs.filter(a => a.type === 'CME').reduce((sum, a) => sum + (a.hours || 0), 0);
+                const totalYearHours = shkhktHours + cmeHours;
+
+                const pass12 = totalYearHours >= 12;
+                const missingHours = pass12 ? 0 : (12 - totalYearHours);
+
+                if (pass12) passCount++;
+                else failCount++;
+
+                return {
+                    emp, shkhktHours, cmeHours, totalYearHours, pass12, missingHours
+                };
+            });
+
+            // Update KPI Banner
+            const totalCount = filteredEmps.length;
+            document.getElementById('r1-kpi-total').textContent = totalCount;
+            const passPct = totalCount > 0 ? Math.round((passCount / totalCount) * 100) : 0;
+            const failPct = totalCount > 0 ? Math.round((failCount / totalCount) * 100) : 0;
+
+            document.getElementById('r1-kpi-pass').textContent = `${passCount} NV (${passPct}%)`;
+            document.getElementById('r1-kpi-fail').textContent = `${failCount} NV (${failPct}%)`;
+
+            // Filter Status
+            if (statusFilter === 'PASS') {
+                reportData = reportData.filter(r => r.pass12);
+            } else if (statusFilter === 'FAIL') {
+                reportData = reportData.filter(r => !r.pass12);
+            }
+
+            if (reportData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-slate-400">Không có dữ liệu phù hợp với điều kiện lọc</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = reportData.map((r, idx) => {
+                const badge = r.pass12
+                    ? `<span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold inline-flex items-center gap-1 shadow-sm"><i data-lucide="check" class="w-3.5 h-3.5"></i> ĐÃ ĐẠT 12t</span>`
+                    : `<span class="px-3 py-1 bg-rose-600 text-white rounded-full text-xs font-bold inline-flex items-center gap-1 shadow-md animate-pulse"><i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> CẢNH BÁO: CHƯA ĐẠT</span>`;
+
+                const missingDisplay = r.pass12
+                    ? `<span class="text-slate-400 font-medium text-xs">-</span>`
+                    : `<span class="text-rose-600 font-bold text-xs bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">Thiếu ${r.missingHours} tiết</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100 ${!r.pass12 ? 'bg-rose-50/20' : ''}">
+                        <td class="p-3 text-slate-500 font-medium">${idx + 1}</td>
+                        <td class="p-3 font-semibold text-slate-700">${r.emp.code}</td>
+                        <td class="p-3 font-bold text-slate-900">${r.emp.name}</td>
+                        <td class="p-3 text-slate-600 text-xs">${r.emp.dept}</td>
+                        <td class="p-3 text-center font-semibold text-indigo-700 bg-indigo-50/20">${r.shkhktHours} tiết</td>
+                        <td class="p-3 text-center font-semibold text-amber-700 bg-amber-50/20">${r.cmeHours} tiết</td>
+                        <td class="p-3 text-center bg-teal-50/30 font-bold text-base ${r.pass12 ? 'text-teal-700' : 'text-rose-600'}">${r.totalYearHours} / 12t</td>
+                        <td class="p-3 text-center">${badge}</td>
+                        <td class="p-3 text-center">${missingDisplay}</td>
+                        <td class="p-3 text-center no-print">
+                            <button onclick="viewEmployeeDetail('${r.emp.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-teal-50 text-teal-700 rounded-lg text-xs font-semibold transition">Chi tiết</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function export1YearExcel() {
+            const selectedYear = parseInt(document.getElementById('r1-year-select').value);
+
+            const dataToExport = employees.map((emp, idx) => {
+                const yearActs = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === selectedYear);
+                const shkhkt = yearActs.filter(a => a.type === 'SHKHKT').reduce((sum, a) => sum + (a.hours || 0), 0);
+                const cme = yearActs.filter(a => a.type === 'CME').reduce((sum, a) => sum + (a.hours || 0), 0);
+                const total = shkhkt + cme;
+                const pass = total >= 12;
+
+                return {
+                    "STT": idx + 1,
+                    "Mã NV": emp.code,
+                    "Họ và Tên": emp.name,
+                    "Khoa / Phòng": emp.dept,
+                    "Chức danh": emp.title || '',
+                    [`Năm Đánh Giá`]: selectedYear,
+                    "Tiết SHKHKT Nội viện": shkhkt,
+                    "Tiết CME Ngoại viện": cme,
+                    "Tổng Tiết Trong Năm": total,
+                    "TRẠNG THÁI (12 TIẾT)": pass ? "ĐÃ ĐẠT" : "CẢNH BÁO: CHƯA ĐẠT",
+                    "SỐ TIẾT THIẾU": pass ? 0 : (12 - total)
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Bao_Cao_1_Nam_${selectedYear}`);
+            XLSX.writeFile(workbook, `Bao_Cao_Tuan_Thu_1_Nam_${selectedYear}.xlsx`);
+        }
+
+        // --- DASHBOARD STATS & CHARTS ---
+        function updateDashboardStats() {
+            const totalEmp = employees.length;
+            document.getElementById('stat-total-emp').textContent = totalEmp;
+
+            // 1. Compute compliance for 2-Year window (2025-2026)
+            const startY = 2025;
+            const endY = 2026;
+            let compliant2YCount = 0;
+            employees.forEach(emp => {
+                const y1Hours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === startY).reduce((s, a) => s + (a.hours || 0), 0);
+                const y2Hours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === endY).reduce((s, a) => s + (a.hours || 0), 0);
+                if ((y1Hours + y2Hours) >= 48) {
+                    compliant2YCount++;
+                }
+            });
+            const rate2Y = totalEmp > 0 ? Math.round((compliant2YCount / totalEmp) * 100) : 0;
+            document.getElementById('stat-compliance-2y').textContent = `${rate2Y}%`;
+            document.getElementById('stat-compliance-2y-count').textContent = `${compliant2YCount} / ${totalEmp} NV đạt 48T`;
+
+            // 2. Compute compliance for 1-Year window (2026)
+            const year1Y = 2026;
+            let compliant1YCount = 0;
+            employees.forEach(emp => {
+                const yearHours = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === year1Y).reduce((s, a) => s + (a.hours || 0), 0);
+                if (yearHours >= 12) {
+                    compliant1YCount++;
+                }
+            });
+            const rate1Y = totalEmp > 0 ? Math.round((compliant1YCount / totalEmp) * 100) : 0;
+            document.getElementById('stat-compliance-1y').textContent = `${rate1Y}%`;
+            document.getElementById('stat-compliance-1y-count').textContent = `${compliant1YCount} / ${totalEmp} NV đạt 12T`;
+
+            // Hours breakdown
+            const totalSHKHKT = activities.filter(a => a.type === 'SHKHKT').reduce((s, a) => s + (a.hours || 0), 0);
+            const totalCME = activities.filter(a => a.type === 'CME').reduce((s, a) => s + (a.hours || 0), 0);
+            const grandTotal = totalSHKHKT + totalCME;
+
+            document.getElementById('stat-total-hours').textContent = `${grandTotal} tiết`;
+            document.getElementById('stat-hours-breakdown').textContent = `SHKHKT: ${totalSHKHKT}t | CME: ${totalCME}t`;
+
+            renderDashboardCharts(compliant2YCount, totalEmp - compliant2YCount, compliant1YCount, totalEmp - compliant1YCount);
+        }
+
+        function renderDashboardCharts(pass2Y, fail2Y, pass1Y, fail1Y) {
+            // Doughnut Chart 1: 2-Year Compliance
+            const ctx1 = document.getElementById('complianceChart2Y').getContext('2d');
+            if (complianceChart2YObj) complianceChart2YObj.destroy();
+            complianceChart2YObj = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đạt (≥48t/2 năm)', 'Chưa đạt'],
+                    datasets: [{
+                        data: [pass2Y, fail2Y],
+                        backgroundColor: ['#6366f1', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // Doughnut Chart 2: 1-Year Compliance
+            const ctx2 = document.getElementById('complianceChart1Y').getContext('2d');
+            if (complianceChart1YObj) complianceChart1YObj.destroy();
+            complianceChart1YObj = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đạt (≥12t/1 năm)', 'Chưa đạt'],
+                    datasets: [{
+                        data: [pass1Y, fail1Y],
+                        backgroundColor: ['#0d9488', '#fb7185'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // --- TAB 6: NEW ANALYTICS & CHARTS TAB ---
+        function renderAnalyticsTab() {
+            const start2Y = parseInt(document.getElementById('analytics-2y-range').value);
+            const end2Y = start2Y + 1;
+            const year1Y = parseInt(document.getElementById('analytics-1y-year').value);
+
+            document.getElementById('print-analytics-2y-text').textContent = `${start2Y}-${end2Y}`;
+            document.getElementById('print-analytics-1y-text').textContent = `${year1Y}`;
+
+            const depts = Array.from(new Set(employees.map(e => e.dept))).filter(Boolean);
+
+            let overallPass2Y = 0;
+            let overallPass1Y = 0;
+            const totalEmps = employees.length;
+
+            const deptAnalytics = depts.map(dept => {
+                const deptEmps = employees.filter(e => e.dept === dept);
+                const deptTotal = deptEmps.length;
+
+                let pass2YCount = 0;
+                let pass1YCount = 0;
+
+                deptEmps.forEach(emp => {
+                    // 2-Year check
+                    const hY1 = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === start2Y).reduce((s, a) => s + (a.hours || 0), 0);
+                    const hY2 = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === end2Y).reduce((s, a) => s + (a.hours || 0), 0);
+                    if ((hY1 + hY2) >= 48) pass2YCount++;
+
+                    // 1-Year check
+                    const h1Y = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === year1Y).reduce((s, a) => s + (a.hours || 0), 0);
+                    if (h1Y >= 12) pass1YCount++;
+                });
+
+                overallPass2Y += pass2YCount;
+                overallPass1Y += pass1YCount;
+
+                const rate2Y = deptTotal > 0 ? Math.round((pass2YCount / deptTotal) * 100) : 0;
+                const rate1Y = deptTotal > 0 ? Math.round((pass1YCount / deptTotal) * 100) : 0;
+
+                return {
+                    dept, deptTotal, pass2YCount, rate2Y, pass1YCount, rate1Y
+                };
+            });
+
+            // 1. Render Pie Charts
+            renderAnalyticsPies(overallPass2Y, totalEmps - overallPass2Y, overallPass1Y, totalEmps - overallPass1Y, totalEmps);
+
+            // 2. Render Department Bar Chart
+            renderDeptComparisonBarChart(deptAnalytics);
+
+            // 3. Render Table
+            const tbody = document.getElementById('analytics-table-body');
+            tbody.innerHTML = deptAnalytics.map((d, idx) => `
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <td class="p-3 text-slate-500 font-medium">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-800">${d.dept}</td>
+                    <td class="p-3 text-center font-semibold text-slate-700">${d.deptTotal} NV</td>
+                    <td class="p-3 text-center bg-indigo-50/30 font-semibold text-indigo-700">${d.pass2YCount} NV</td>
+                    <td class="p-3 text-center bg-indigo-50/30 font-bold text-indigo-800">${d.rate2Y}%</td>
+                    <td class="p-3 text-center bg-teal-50/30 font-semibold text-teal-700">${d.pass1YCount} NV</td>
+                    <td class="p-3 text-center bg-teal-50/30 font-bold text-teal-800">${d.rate1Y}%</td>
+                    <td class="p-3 text-center">
+                        ${(d.rate2Y >= 80 && d.rate1Y >= 80)
+                            ? `<span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold">Tốt</span>`
+                            : `<span class="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-bold">Cần Thúc Đẩy</span>`}
+                    </td>
+                </tr>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        function renderAnalyticsPies(pass2Y, fail2Y, pass1Y, fail1Y, total) {
+            // Pie 2Y
+            const ctx1 = document.getElementById('analyticsPie2Y').getContext('2d');
+            if (analyticsPie2YObj) analyticsPie2YObj.destroy();
+            analyticsPie2YObj = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: ['Đạt (≥48 tiết)', 'Chưa đạt'],
+                    datasets: [{
+                        data: [pass2Y, fail2Y],
+                        backgroundColor: ['#6366f1', '#f43f5e']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            const pct2Y = total > 0 ? Math.round((pass2Y / total) * 100) : 0;
+            document.getElementById('analytics-legend-2y').innerHTML = `Tỷ lệ Tuân thủ Toàn Bệnh viện: <span class="text-indigo-600 font-bold text-sm">${pct2Y}%</span> (${pass2Y}/${total} NV đạt)`;
+
+            // Pie 1Y
+            const ctx2 = document.getElementById('analyticsPie1Y').getContext('2d');
+            if (analyticsPie1YObj) analyticsPie1YObj.destroy();
+            analyticsPie1YObj = new Chart(ctx2, {
+                type: 'pie',
+                data: {
+                    labels: ['Đạt (≥12 tiết)', 'Chưa đạt'],
+                    datasets: [{
+                        data: [pass1Y, fail1Y],
+                        backgroundColor: ['#0d9488', '#fb7185']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+            const pct1Y = total > 0 ? Math.round((pass1Y / total) * 100) : 0;
+            document.getElementById('analytics-legend-1y').innerHTML = `Tỷ lệ Tuân thủ Toàn Bệnh viện: <span class="text-teal-600 font-bold text-sm">${pct1Y}%</span> (${pass1Y}/${total} NV đạt)`;
+        }
+
+        function renderDeptComparisonBarChart(deptAnalytics) {
+            const ctx = document.getElementById('deptComparisonBarChart').getContext('2d');
+            if (deptComparisonBarChartObj) deptComparisonBarChartObj.destroy();
+
+            const labels = deptAnalytics.map(d => d.dept);
+            const data2Y = deptAnalytics.map(d => d.rate2Y);
+            const data1Y = deptAnalytics.map(d => d.rate1Y);
+
+            deptComparisonBarChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Tỷ lệ đạt Mục 1: 48T/2 năm (%)',
+                            data: data2Y,
+                            backgroundColor: '#6366f1',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Tỷ lệ đạt Mục 2: 12T/1 năm (%)',
+                            data: data1Y,
+                            backgroundColor: '#0d9488',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { callback: v => v + '%' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+        }
+
+        function exportAnalyticsExcel() {
+            const start2Y = parseInt(document.getElementById('analytics-2y-range').value);
+            const end2Y = start2Y + 1;
+            const year1Y = parseInt(document.getElementById('analytics-1y-year').value);
+
+            const depts = Array.from(new Set(employees.map(e => e.dept))).filter(Boolean);
+
+            const exportData = depts.map((dept, idx) => {
+                const deptEmps = employees.filter(e => e.dept === dept);
+                const deptTotal = deptEmps.length;
+
+                let pass2YCount = 0;
+                let pass1YCount = 0;
+
+                deptEmps.forEach(emp => {
+                    const hY1 = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === start2Y).reduce((s, a) => s + (a.hours || 0), 0);
+                    const hY2 = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === end2Y).reduce((s, a) => s + (a.hours || 0), 0);
+                    if ((hY1 + hY2) >= 48) pass2YCount++;
+
+                    const h1Y = activities.filter(a => a.empId === emp.id && new Date(a.startDate).getFullYear() === year1Y).reduce((s, a) => s + (a.hours || 0), 0);
+                    if (h1Y >= 12) pass1YCount++;
+                });
+
+                const rate2Y = deptTotal > 0 ? Math.round((pass2YCount / deptTotal) * 100) : 0;
+                const rate1Y = deptTotal > 0 ? Math.round((pass1YCount / deptTotal) * 100) : 0;
+
+                return {
+                    "STT": idx + 1,
+                    "Khoa / Phòng": dept,
+                    "Tổng NV": deptTotal,
+                    [`Số NV Đạt 48T (${start2Y}-${end2Y})`]: pass2YCount,
+                    [`Tỷ Lệ Đạt 48T (%)`]: rate2Y,
+                    [`Số NV Đạt 12T (${year1Y})`]: pass1YCount,
+                    [`Tỷ Lệ Đạt 12T (%)`]: rate1Y
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Ty_Le_Tuan_Thu_Khoa_Phong");
+            XLSX.writeFile(workbook, `Bao_Cao_Ty_Le_Tuan_Thu_${start2Y}_${end2Y}.xlsx`);
+        }
+
+        function renderCharts(passCount, failCount) {
+            // Chart 1: Donut Compliance
+            const ctx1 = document.getElementById('complianceChart').getContext('2d');
+            if (complianceChartObj) complianceChartObj.destroy();
+
+            complianceChartObj = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Đạt chuẩn (≥48t)', 'Cần bổ sung'],
+                    datasets: [{
+                        data: [passCount, failCount],
+                        backgroundColor: ['#10b981', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Chart 2: Bar by Department
+            const depts = Array.from(new Set(employees.map(e => e.dept))).filter(Boolean);
+            const deptHours = depts.map(d => {
+                const empIds = employees.filter(e => e.dept === d).map(e => e.id);
+                return activities.filter(a => empIds.includes(a.empId)).reduce((sum, a) => sum + (a.hours || 0), 0);
+            });
+
+            const ctx2 = document.getElementById('departmentChart').getContext('2d');
+            if (departmentChartObj) departmentChartObj.destroy();
+
+            departmentChartObj = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: depts,
+                    datasets: [{
+                        label: 'Tổng số tiết đào tạo',
+                        data: deptHours,
+                        backgroundColor: '#0d9488',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // --- EMPLOYEE DETAIL MODAL ---
+        function viewEmployeeDetail(empId) {
+            const emp = employees.find(e => e.id === empId);
+            if (!emp) return;
+
+            document.getElementById('detail-emp-name').textContent = emp.name;
+            document.getElementById('detail-emp-sub').textContent = `Mã NV: ${emp.code} | Khoa: ${emp.dept} | Chức danh: ${emp.title || 'N/A'}`;
+
+            const empActs = activities.filter(a => a.empId === empId).sort((a,b) => new Date(b.startDate) - new Date(a.startDate));
+
+            // Summary stats for last 3 years
+            const curY = new Date().getFullYear();
+            const y1 = 2024;
+            const y2 = 2025;
+
+            const hY1 = empActs.filter(a => new Date(a.startDate).getFullYear() === y1).reduce((s, a) => s + (a.hours || 0), 0);
+            const hY2 = empActs.filter(a => new Date(a.startDate).getFullYear() === y2).reduce((s, a) => s + (a.hours || 0), 0);
+            const total2Y = hY1 + hY2;
+
+            const grid = document.getElementById('detail-stats-grid');
+            grid.innerHTML = `
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase">Tiết học năm ${y1}</p>
+                    <h4 class="text-xl font-bold ${hY1 >= 12 ? 'text-teal-700' : 'text-rose-600'} mt-0.5">${hY1} tiết</h4>
+                    <p class="text-[10px] text-slate-400 mt-1">${hY1 >= 12 ? '✓ Đạt ≥12 tiết' : '✕ Thiếu ' + (12 - hY1) + ' tiết'}</p>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <p class="text-[11px] font-semibold text-slate-500 uppercase">Tiết học năm ${y2}</p>
+                    <h4 class="text-xl font-bold ${hY2 >= 12 ? 'text-teal-700' : 'text-rose-600'} mt-0.5">${hY2} tiết</h4>
+                    <p class="text-[10px] text-slate-400 mt-1">${hY2 >= 12 ? '✓ Đạt ≥12 tiết' : '✕ Thiếu ' + (12 - hY2) + ' tiết'}</p>
+                </div>
+                <div class="bg-teal-50 p-3 rounded-xl border border-teal-200">
+                    <p class="text-[11px] font-semibold text-teal-800 uppercase">Tổng 2 Năm (${y1}-${y2})</p>
+                    <h4 class="text-xl font-bold ${total2Y >= 48 && hY1 >= 12 && hY2 >= 12 ? 'text-teal-700' : 'text-rose-600'} mt-0.5">${total2Y} / 48t</h4>
+                    <p class="text-[10px] font-bold mt-1 ${total2Y >= 48 && hY1 >= 12 && hY2 >= 12 ? 'text-emerald-600' : 'text-rose-600'}">
+                        ${total2Y >= 48 && hY1 >= 12 && hY2 >= 12 ? '✓ ĐẠT CHUẨN' : '✕ CHƯA ĐẠT CHUẨN'}
+                    </p>
+                </div>
+            `;
+
+            const tbody = document.getElementById('detail-activity-body');
+            if (empActs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Chưa có lịch sử đào tạo nào</td></tr>`;
+            } else {
+                tbody.innerHTML = empActs.map(a => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-2.5 font-medium whitespace-nowrap">${formatDate(a.startDate)}</td>
+                        <td class="p-2.5 font-medium text-slate-800">${a.title}</td>
+                        <td class="p-2.5">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${a.type === 'SHKHKT' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}">
+                                ${a.type}
+                            </span>
+                        </td>
+                        <td class="p-2.5 text-slate-600">${a.provider}</td>
+                        <td class="p-2.5 text-center font-bold text-teal-700">${a.hours}t</td>
+                        <td class="p-2.5 text-slate-500">${a.certNo || '-'}</td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('modal-employee-detail').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('modal-employee-detail').classList.add('hidden');
+        }
+
+        // Helper: Format Date
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('vi-VN');
+        }
+    </script>
+</body>
+</html>
